@@ -48,8 +48,8 @@ def getDetails(lastname,add,state,delimiter):
     br.set_cookiejar(cj)
     # Don't handle HTTP-EQUIV headers (HTTP headers embedded in HTML).
     br.set_handle_equiv(False)
-    # Ignore robots.txt.  Do not do this without thought and consideration.
-    br.set_handle_robots(False)
+    # Don't Ignore robots.txt.
+    br.set_handle_robots(True)
     #  add Referer (sic) header
     br.set_handle_referer(True)
     #  handle Refresh redirections
@@ -61,8 +61,6 @@ def getDetails(lastname,add,state,delimiter):
     
     # Follows refresh 0 but not hangs on refresh > 0
     br.set_handle_refresh(mechanize._http.HTTPRefreshProcessor(), max_time=10)
-    # User-Agent (this is cheating, ok?)
-    br.addheaders = [('User-agent', 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9.0.1) Gecko/2008071615 Fedora/3.0.1-1.fc9 Firefox/3.0.1')]
     i = 0
     gonext = True
     details = []
