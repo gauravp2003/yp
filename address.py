@@ -28,17 +28,18 @@ from BeautifulSoup import BeautifulSoup          # For processing HTML
 from mechanize import ParseResponse, urlopen, urljoin
 import argparse
 import time
+import pprint
+pp = pprint.PrettyPrinter(indent=4)
 
-
-def get_num(x):
-    return int(''.join(ele for ele in x if ele.isdigit()))
-def is_number(s):
-    try:
-        int(s)
-        return int(s)
-    except ValueError:
-        return 0
-def getDetails(lastname,add,state,delimiter):
+#def get_num(x):
+#    return int(''.join(ele for ele in x if ele.isdigit()))
+#def is_number(s):
+#    try:
+#        int(s)
+#        return int(s)
+#    except ValueError:
+#        return 0
+def getDetails(lastname,add,state):
     """
     address.getDetails("lastname","city","state","|")
     """
@@ -65,51 +66,47 @@ def getDetails(lastname,add,state,delimiter):
     gonext = True
     details = []
     while gonext:
-        urlCreated = 'http://www.yellowpages.com/whitepages?fap_terms%5Bcity%5D='+add+'&amp;fap_terms%5Bfirst%5D=&amp;fap_terms%5Blast%5D=' +  lastname + '&amp;fap_terms%5Bstate%5D='+ state + '&amp;offset='+ str(i*10)
-
+        urlCreated = 'http://www.yellowpages.com/whitepages?first=&last='+str(lastname)+'&zip='+str(add)+'&state='+str(state)+'&start=' + str(i*10)
         #Opens the site to be navigated
         response = br.open(urlCreated)
         soup = BeautifulSoup(br.response().read())
-        #t = soup.find("h2", {"id": "pagination-count"})
-        allLi = soup.findAll("address", { "class" : "fap-address-result"})
+        allLi = soup.findAll("div", { "class" : "phone-result-container"})
         gonext = len(allLi)>0
-        #print "length:" ,len(allLi)     
         if gonext:    
-	    for item in allLi:
-	        numberPhone = is_number("".join(str(item.text[-12:]).split("-")))
-	        if numberPhone != 0:
-                    d = delimiter.join([item.a.text,item["data-street"],str(numberPhone)])
-	        else:
-	            d = delimiter.join([item.a.text,item["data-street"]])
-                #print d,item.text
+            for item in allLi:
+                d = []
+                d.append(item.find('a',{"class":'fullname'}).text)
+                d.append(item.find('p',{"class":'address'}).text)
+                d.append(item.find('p',{"class":'phone'}).text)
                 details.append(d)
-        #else:
-            #print "Processing Complete for",lastname,add,state
-        i = i+1
-    return details
+            i = i+1
+        else:
+            print "Processing Complete for",lastname,add,state
+            return details
 
 def main():
-	parser = argparse.ArgumentParser(description='Fetching Names and Address listed in YP.',prog='python args.py', usage='%(prog)s [options]')
-	parser.add_argument('-l','--lastname', help='Enter LastName',required=True)
-	parser.add_argument('-c','--city', help='Enter City')
-	parser.add_argument('-z','--zip', help='Enter ZipCode')
-	parser.add_argument('-s','--state', help='Enter State',required = "True")
-	parser.add_argument('-d','--delimiter', help='Enter delimiter: Default - "|"',default = "|")	  
-        values = parser.parse_args()
-	lastname = values.lastname
-	if (values.city is not None):
-	    add = "+".join(values.city.split())
-	elif values.zip is not None:
-	    add = values.zip
-	else:
-	    print "Enter City and State or Zip"
-	    sys.exit(0)
-	lastName = "+".join(lastname.split())
-        state = values.state
-        delimiter = values.delimiter
-        details = getDetails(lastname,add,state,delimiter)
-        print details
+    parser = argparse.ArgumentParser(description='Fetching Names and Address listed in YP.',prog='python address.py', usage='%(prog)s [options]')
+    parser.add_argument('-l','--lastname', help='Enter LastName',required=True)
+    parser.add_argument('-c','--city', help='Enter City')
+    parser.add_argument('-z','--zip', help='Enter ZipCode')
+    parser.add_argument('-s','--state', help='Enter State',required = "True")
+    parser.add_argument('-d','--delimiter', help='Enter delimiter: Default - "|"',default = "|")      
+    values = parser.parse_args()
+    lastname = values.lastname
+    if (values.city is not None):
+        add = "+".join(values.city.split())
+    elif values.zip is not None:
+        add = values.zip
+    else:
+        print "Enter City and State -s or Zip -z"
+        sys.exit(0)
+    lastName = "+".join(lastname.split())
+    state = values.state
+    delimiter = values.delimiter
+    details = getDetails(lastname,add,state)
+    details = [delimiter.join(item) for item in details]
+    pp.pprint(details)
 
 
 if __name__ == '__main__':
-    main() 	
+    main()  
